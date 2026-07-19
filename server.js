@@ -13,10 +13,12 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 
 // Middleware
-// Replace the URL below with your actual Vercel frontend URL once deployed
+// Explicitly using your Vercel URL as the default to prevent CORS issues
+const allowedOrigin = process.env.FRONTEND_URL || "https://fly247-frontend-khaki.vercel.app";
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*", // Use environment variable for security
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 
@@ -35,7 +37,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-// IMPORTANT: Use '0.0.0.0' for Render compatibility
+// IMPORTANT: Use '0.0.0.0' for Render compatibility and dynamic PORT
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
