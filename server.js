@@ -13,7 +13,13 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+// Replace the URL below with your actual Vercel frontend URL once deployed
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*", // Use environment variable for security
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Connect to Database
@@ -29,7 +35,8 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// IMPORTANT: Use '0.0.0.0' for Render compatibility
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
 });
