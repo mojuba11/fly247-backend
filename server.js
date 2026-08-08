@@ -1,3 +1,5 @@
+// server.js
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -27,6 +29,11 @@ app.use(express.json());
 
 // Connect to Database
 connectDB();
+
+// Root route to handle GET / requests gracefully
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'success', message: 'Fly247 API is running smoothly!' });
+});
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
