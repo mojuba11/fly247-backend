@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const flightRoutes = require('./routes/flightRoutes'); // Added SkyLink Flight Routes
 
 const app = express();
 
@@ -31,6 +32,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/flights', flightRoutes); // Mounted SkyLink Flight Routes
 
 // Health check route
 app.get('/api/health', (req, res) => {
