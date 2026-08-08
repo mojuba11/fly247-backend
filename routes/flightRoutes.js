@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const skylinkApi = require('../services/skylinkService');
+const Transaction = require('../models/Transaction'); // Import Transaction model for database verification
 
 // 1. Flight Search Endpoint
 router.post('/search', async (req, res) => {
   try {
-    // Ensure search_mode is set to external for live supplier inventory[cite: 1]
+    // Ensure search_mode is set to external for live supplier inventory
     const payload = { search_mode: 'external', ...req.body };
     const response = await skylinkApi.post('/flights/search', payload);
 
@@ -35,7 +36,7 @@ router.post('/search', async (req, res) => {
 // 2. Flight Pricing / Verification Endpoint
 router.post('/pricing', async (req, res) => {
   try {
-    // Re-validates pricing and returns a fresh booking_token[cite: 1]
+    // Re-validates pricing and returns a fresh booking_token
     const response = await skylinkApi.post('/flights/pricing', req.body);
     res.status(200).json(response.data);
   } catch (error) {
@@ -52,21 +53,34 @@ router.post('/reserve', async (req, res) => {
     /* 
       CRITICAL PAYMENT OBLIGATION CHECK:
       Per SkyLink terms, you must ensure full payment has been collected and 
-      confirmed on your platform before calling this endpoint[cite: 1]. 
-      Always verify your internal transaction database or payment gateway 
-      status here before proceeding.
+      confirmed on your platform before calling this endpoint. 
+      We verify the transaction record saved by paymentRoutes.js in MongoDB.
     */
-    const paymentConfirmed = true; // Replace this with your actual database/payment check logic
+    const { transactionId, reference, ...restBody } = req.body;
+    const paymentRef = transactionId || reference;
 
-    if (!paymentConfirmed) {
+    if (!paymentRef) {
       return res.status(400).json({
         success: false,
-        message: "Payment must be confirmed before generating a flight reservation."
+        message: "Transaction reference is required to verify payment before booking."
       });
     }
 
-    // Submits passenger details and updated booking_token to generate live PNR[cite: 1]
-    const response = await skylinkApi.post('/flights/reserve', req.body);
+    // Check database to confirm payment was successful
+    const paymentRecord = await Transaction.findOne({ 
+      transactionId: paymentRef, 
+      status: 'success' 
+    });
+
+    if (!paymentRecord) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment must be confirmed and verified before generating a flight reservation."
+      });
+    }
+
+    // Submits passenger details and updated booking_token to generate live PNR
+    const response = await skylinkApi.post('/flights/reserve', restBody);
     res.status(200).json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({
